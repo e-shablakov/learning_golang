@@ -1,0 +1,5 @@
+# Project exclude paths
+/pkg/mod/golang.org/x/website@v0.0.0-20241002192040-5f6954e6fcc9/internal/web/testdata/example.js
+.idea
+bin
+pkg

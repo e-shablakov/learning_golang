@@ -26,18 +26,23 @@ type Task struct {
 }
 
 func producer(id int) {
+	// выполнится после выхода из цикла
+	// сообщает о завершении работы горутины
 	defer wg.Done()
+
 	for {
+		// проверка стоп сигнала
 		if atomic.LoadInt32(&stopSignal) == 1 {
 			fmt.Printf("Producer %d stopping...\n", id)
 			return
 		}
 
-		item := Task{id: rand.Intn(100), name: fmt.Sprintf("Task from %d producer", id)}
+		task := Task{id: rand.Intn(100), name: fmt.Sprintf("Task from %d producer", id)}
 
+		// критическая секция для доступа к буфферу
 		mutex.Lock()
-		buffer = append(buffer, item)
-		fmt.Printf("Producer %d added: %v\n", id, item)
+		buffer = append(buffer, task)
+		fmt.Printf("Producer %d added: %v\n", id, task)
 		mutex.Unlock()
 
 		time.Sleep(time.Second * 2)
@@ -45,13 +50,17 @@ func producer(id int) {
 }
 
 func consumer(id int) {
+	// выполнится после выхода из цикла
+	// сообщает о завершении работы горутины
 	defer wg.Done()
 	for {
-		if atomic.LoadInt32(&stopSignal) == 1 && len(buffer) == 0 {
+		// проверка стоп сигнала
+		if atomic.LoadInt32(&stopSignal) == 1 {
 			fmt.Printf("Consumer %d stopping...\n", id)
 			return
 		}
 
+		// критическая секция для доступа к буфферу
 		mutex.Lock()
 		if len(buffer) > 0 {
 			item := buffer[0]
@@ -82,6 +91,7 @@ func main() {
 
 	atomic.StoreInt32(&stopSignal, 1)
 
+	// ожидает выполнения всех горутин
 	wg.Wait()
 
 	fmt.Println("All producers and consumers stopped.")
